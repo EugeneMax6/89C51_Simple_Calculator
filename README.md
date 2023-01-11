@@ -22,8 +22,8 @@ There may be some bugs which I have neglected.
 
 ## 电路图片 / The Picture of the Circuit
 
-![计算器](计算器.SVG)
+![计算器](https://github.com/EugeneMax6/89C51_Simple_Calculator/blob/main/计算器.SVG)
 
 ## 功能展示 / Function Display （With GIF Picture)
 
-![display](display.gif)
+![display](https://raw.githubusercontent.com/EugeneMax6/89C51_Simple_Calculator/main/display.gif)
