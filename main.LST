@@ -1,0 +1,184 @@
+C51 COMPILER V9.01   MAIN                                                                  06/19/2021 11:59:56 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          //main.c 
+   2          #include "reg52.h"
+   3          #include "LCD1602.h"
+   4          #define uchar unsigned char
+   5          #define uint unsigned int
+   6          
+   7          sbit LED=P1^7;
+   8          sbit sw=P1^6;
+   9          
+  10          uchar button;
+  11          uint op;                          //单次计算符
+  12          int keyscan();            //按键扫描函数
+  13          int key_value;            //按键返回值
+  14          uchar kk,pre_P2,state;          //state代表运算符号
+  15          long  NUMA,NUMB;                        //两个运算数
+  16          uchar table[16]={'0'};                     //将结果以字符数组存入，方便输出
+  17          long result;                                       //long类型的结果，便于更大数值的计算
+  18          void Int_to_Table(long dat)                //将最终值的各个位分离开来，存到字符数组中
+  19          {
+  20   1              uint i=0,m=0,temp[16]={0};
+  21   1              if(dat<0)         //如果结果是负数，数组第一位为负号
+  22   1              {
+  23   2                      table[m]='-';
+  24   2                      dat= -dat;
+  25   2                      m++;
+  26   2              }
+  27   1              do                        //每一位数字存入临时数组temp
+  28   1              {
+  29   2                      temp[i]=dat%10;                 //结果对10取余得到每位数
+  30   2                      dat=dat/10;
+  31   2                      i++;
+  32   2              }while(dat);
+  33   1              while(i)
+  34   1              {
+  35   2                      i--;
+  36   2                      table[m]=temp[i]+'0';           //table数组是uchar，temp是int，进行整型到字符型的转换
+  37   2                      m++;
+  38   2              }
+  39   1              table[m]='\0';
+  40   1      }
+  41          
+  42          void start()
+  43          {
+  44   1              op=0;
+  45   1              result=0;                         //初始化运算结果为0
+  46   1              while(button)              //如果开关按下
+  47   1              {
+  48   2                      key_value = keyscan();
+  49   2                      if(P2 != 0xF0) //按键松开
+  50   2                      {
+  51   3                              if(key_value>=0 && key_value<=9)  //如果按下的按键是0~9，进行赋值和显示相应数字
+  52   3                              {
+  53   4                                      result=result*10+key_value;       //由扫描到的数字进行赋值
+  54   4                                      LCD1602_Write_DAT(key_value+'0');                //LCD1602显示相应数字
+  55   4                              }
+C51 COMPILER V9.01   MAIN                                                                  06/19/2021 11:59:56 PAGE 2   
+
+  56   3                              else if(key_value>=12 && key_value<=15)   //如果按下的按键是加减乘除，显示相应运算符号
+  57   3                              {
+  58   4                                      if(op==0)
+  59   4                                      {
+  60   5                                              op=1;
+  61   5                                              NUMA = result;   //给第一个运算数赋值
+  62   5                                              if(op==1)
+  63   5                                              {
+  64   6                                                      LCD1602_Clear();
+  65   6                                                      Int_to_Table(result);
+  66   6                                                      LCD1602_Write_String(0,0,table);
+  67   6                                              }
+  68   5                                              if(key_value==12)                 //如果按下加号
+  69   5                                              {       
+  70   6                                                      state = '+';              //符号赋值+
+  71   6                                                      LCD1602_Write_DAT('+');                  //显示加号
+  72   6                                              }
+  73   5                                              else if(key_value==13)            //如果按下减号
+  74   5                                              {
+  75   6                                                      state = '-';                     //符号赋值-
+  76   6                                                      LCD1602_Write_DAT('-');                  //显示减号
+  77   6                                              }
+  78   5                                              else if(key_value==14)             //如果按下乘号
+  79   5                                              {
+  80   6                                                      state = '*';               //符号赋值乘号
+  81   6                                                      LCD1602_Write_DAT('*');                          //显示乘号
+  82   6                                              }
+  83   5                                              else if(key_value==15)                           //如果按下除号
+  84   5                                              {
+  85   6                                                      state = '/';                                    //符号赋值除号
+  86   6                                                      LCD1602_Write_DAT('/');                 //显示除号
+  87   6                                              }
+  88   5                                              result=0;                 //重置result，为第二个运算数赋值准备
+  89   5                                      }       
+  90   4                              }
+  91   3                              else if(key_value==11)  //如果按下等号
+  92   3                              {
+  93   4                                      uint flag=1;                              //除数标志，默认为1
+  94   4                                      NUMB = result;
+  95   4                                      if(state == '+')
+  96   4                                              result = NUMA + NUMB;     //两数相加
+  97   4                                      else if(state == '-')
+  98   4                                              result = NUMA - NUMB;     //两数相减
+  99   4                                      else if(state == '*')
+ 100   4                                              result = NUMA * NUMB;     //两数相乘
+ 101   4                                      else if(state == '/')
+ 102   4                                      {       
+ 103   5                                              if(NUMB==0) flag=0;                //如果除数为0，flag改为0
+ 104   5                                              else result = NUMA / NUMB;                       //两数相除
+ 105   5                                      }
+ 106   4                                      if(flag==1)                                       //如果正常输出结果
+ 107   4                                      {
+ 108   5                                              LCD1602_Position (1,0);    // 设置光标显示区域
+ 109   5                                              LCD1602_Write_DAT('=');
+ 110   5                                              Int_to_Table(result);                    //result存入数组，方便多位数字的输出
+ 111   5                                              LCD1602_Write_String(1,1,table);   //显示结果
+ 112   5                                      }
+ 113   4                                      else 
+ 114   4                                      {
+ 115   5                                              LCD1602_Write_String(0,0,"Mistake!!!");                 //除数为0，输出错误信息
+ 116   5                                              LCD1602_Write_String(1,0,"Divisor is Zero");    
+ 117   5                                      }
+C51 COMPILER V9.01   MAIN                                                                  06/19/2021 11:59:56 PAGE 3   
+
+ 118   4                                      state = 0;      //重置运算符号变量
+ 119   4                                      op=0;
+ 120   4                              }
+ 121   3                              else if(key_value==10)  //清屏、重置
+ 122   3                              {
+ 123   4                                      NUMA = 0;                       //操作数全部重置
+ 124   4                                      NUMB = 0;
+ 125   4                                      result = 0;
+ 126   4                                      op = 0;
+ 127   4                                      LCD1602_Clear();        //LCD1602清屏
+ 128   4                              }
+ 129   3                      
+ 130   3                      }
+ 131   2                      kk = 200;
+ 132   2                      while(kk--);            
+ 133   2              }
+ 134   1      }
+ 135          void main()
+ 136          {       button=0;
+ 137   1              IE=0x85;    //EA置1，EX1和EX0置1
+ 138   1              TCON=0x05;      //IT1和IT0置1，负边沿触发
+ 139   1              PX1=1;          //INT1优先级高
+ 140   1              LED=0;
+ 141   1              while(1);
+ 142   1      }
+ 143          void int0() interrupt 0{                        //INT0中断  打开
+ 144   1              button=1;
+ 145   1              LED=1;                    //开机时自动打开LED灯
+ 146   1              LCD1602_Init();                 //LCD1602初始化
+ 147   1              start();                  //计算器进入运行
+ 148   1      }
+ 149          void int1() interrupt 2{                        //INT1中断      关闭
+ 150   1              LCD1602_Clear();         
+ 151   1              LCD1602_Write_CMD(0X08);  //LCD1602关闭显示
+ 152   1              button=0;
+ 153   1              LED=0;
+ 154   1      
+ 155   1      }
+ 156          
+ 157          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1071    ----
+   CONSTANT SIZE    =     59    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     36      46
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

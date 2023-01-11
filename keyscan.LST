@@ -1,0 +1,56 @@
+C51 COMPILER V9.01   KEYSCAN                                                               06/19/2021 11:59:05 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE KEYSCAN
+OBJECT MODULE PLACED IN keyscan.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE keyscan.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #define uchar unsigned char
+   3          #define uint unsigned int
+   4          void delay_ms(uint i){ //延时函数
+   5   1              uint j=0;
+   6   1              uint n=0;
+   7   1              for(j=0;j<i;j++)
+   8   1                      for(n=0;n<=118;n++);
+   9   1      }
+  10          int keyscan()  /*矩阵键盘扫描函数*/
+  11          {       
+  12   1              uchar row,col;                  //定义行列变量
+  13   1              static int value=0;     //定义按键值
+  14   1              
+  15   1              P2 = 0xF0;              //将高四位电平拉高
+  16   1              if(P2 != 0xF0)  //当不全为高电平，说明有按键按下
+  17   1              {       
+  18   2                      delay_ms(10);   //延时去抖动
+  19   2                      if(P2 != 0xF0){ //再次检测
+  20   3                      P2=0xFF;P2 = 0xF0; row = P2; //采用行列扫描法，将行值赋给row
+  21   3                      P2=0xFF;P2 = 0x0F; col = P2; //再将列值赋给col
+  22   3                      switch (row | col)      
+  23   3                      {
+  24   4                              case 0xeb : value = 0; break;
+  25   4                              case 0xd7 : value = 1; break;
+  26   4                              case 0xdb : value = 2; break;
+  27   4                              case 0xdd : value = 3; break;
+  28   4                              case 0xb7 : value = 4; break;
+  29   4                              case 0xbb : value = 5; break;
+  30   4                              case 0xbd : value = 6; break;
+  31   4                              case 0x77 : value = 7; break;
+  32   4                              case 0x7b : value = 8; break;
+  33   4                              case 0x7d : value = 9; break;
+  34   4                              case 0xe7 : value = 10;break;           
+  35   4                              case 0xed : value = 11;break;
+  36   4                              case 0xee : value = 12;break;
+  37   4                              case 0xde : value = 13;break;
+  38   4                              case 0xbe : value = 14;break;
+  39   4                              case 0x7e : value = 15;break;
+  40   4                              default   : value = 16;break;
+  41   4                      }
+  42   3              }
+  43   2              return value; //返回最终的键值
+  44   2      }
+*** ERROR C141 IN LINE 44 OF KEYSCAN.C: syntax error near ''
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  1 ERROR(S)
